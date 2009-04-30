@@ -55,12 +55,12 @@
 			$IRC_Msg_ActionCheck = substr($IRC_Msg, 1);
 			$IRC_Msg_ActionCheck = explode(" ",$IRC_Msg_ActionCheck);
 			
-			// If its an action... (case sensitive now, lets not spark it off with someone being a director and shouting action! THIS ISNT A FILM SET FOR GOD SAKE)
+			// If its an action... (case sensitive now, lets not spark it off with someone being a director and starting a film! THIS ISNT A FILM SET FOR GOD SAKE)
 			if ($IRC_Msg_ActionCheck[0] === "ACTION") {
 			
 				// Lets not play around with the main $IRC_Msg, as we might break something if we remove the ACTION from it
 				// Plus if we ever want to look at the log, we wont have a clue what ones are ACTIONS and which ones arnt
-				// And im bored
+				// ...and im bored
 				$IRC_Msg_Action = $IRC_Msg;
 				$IRC_Msg_Action = substr($IRC_Msg_Action, 8);
 				
@@ -106,9 +106,7 @@
 			$IRC_Topic_mySQL_Query = "UPDATE `channels` SET `topic_set` = '$IRC_Topic_Set' WHERE `id` = '$IRC_Channel_ID'";
 			$IRC_Topic_mySQL_Result = mysql_query($IRC_Topic_mySQL_Query);
 			
-			$IRC_Topic_mySQL_Query = "SELECT * FROM `nicks` WHERE `id` = '$IRC_Nick_ID'";
-			$IRC_Topic_mySQL_Result = mysql_query($IRC_Topic_mySQL_Query);
-			$IRC_Nick = mysql_result($IRC_Topic_mySQL_Result,0,"nick");
+			$IRC_Nick = IRC_Nick_Lookup_ID("$IRC_Nick_ID");
 			
 			// Update the database with the author of this cruel creation of a topic
 			$IRC_Topic_mySQL_Query = "UPDATE `channels` SET `topic_author` = '$IRC_Nick' WHERE `id` = '$IRC_Channel_ID'";
@@ -121,7 +119,10 @@
 			IRC_Console("Tpc","[C:$IRC_Channel_ID|N:$IRC_Nick_ID] $IRC_Topic");
 			
 			// Show it in the console.. again.. some people eh?
-			IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Author: $IRC_Nick Date: $IRC_Topic_Set");
+			IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Author: $IRC_Nick");
+			
+			// And the date...
+			IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Date: $IRC_Topic_Set");
 		
 		}
 		
@@ -152,12 +153,15 @@
 		
 		// This code will be run everytime someone is kicked out a channel
 		if ($IRC_Command_Type == 'KICK') {
+		
+			// Variable Adjustment
+			$IRC_Kick_Nick = $command_[3];
 			
 			// Get the specific id for the channel from the stats database
 			$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Msg_Target");
 			
 			// Get the specific id for the nickname from the stats database
-			$IRC_Nick_ID = IRC_Nick_Lookup("$command_[3]","$IRC_Channel_ID");
+			$IRC_Nick_ID = IRC_Nick_Lookup("$IRC_Kick_Nick","$IRC_Channel_ID");
 			
 			// Get the specific id for the nickname from the stats database
 			$IRC_Nick_ID_2 = IRC_Nick_Lookup("$IRC_Msg_Nick","$IRC_Channel_ID");
@@ -171,10 +175,23 @@
 			$IRC_Stat_mySQL_Result = mysql_query($IRC_Stat_mySQL_Query);
 			
 			// Show it in the console
-			IRC_Console("Svr","$command_[3] Kicked from $IRC_Msg_Target by $IRC_Msg_Nick");
+			IRC_Console("Svr","$IRC_Kick_Nick Kicked from $IRC_Msg_Target by $IRC_Msg_Nick");
 			
 			// Write it to the log
 			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Kick","$IRC_Nick_ID_2");
+			
+			$IRC_Server_Nick = IRC_Setting("ServerNick");
+			
+			// If this is true, the bot got kicked out so lets rejoin the channel
+			if ($IRC_Kick_Nick == $IRC_Server_Nick) {
+			
+				// Send join command to the server
+				IRC_Send($sock,"JOIN $IRC_Msg_Target");
+			
+				// Print to the console about it
+				IRC_Console("Svr","Re-Joining $IRC_Msg_Target");
+			
+			}
 		
 		}
 		
@@ -222,7 +239,7 @@
 			IRC_Stats_Joins("$IRC_Nick_ID","$IRC_Channel_ID");
 			
 			// Print to the console
-			IRC_Console("Svr","[N:$IRC_Nick_ID|C:$IRC_Channel_ID] $IRC_Msg_Nick Joined");
+			IRC_Console("Svr","[N:$IRC_Nick_ID|C:$IRC_Channel_ID] $IRC_Msg_Nick Joined $IRC_Join_Channel");
 			
 			// Lets see if there are any addons to be run when someone joins a channel
 			IRC_Join_Addon("$IRC_Nick_ID","$IRC_Channel_ID",$sock);
@@ -259,7 +276,7 @@
 	if (ereg("^ERROR",$message)) {
 	
 		// Send quit command to IRC server, flee!
-		IRC_Quit($sock,"Error has occured");
+		IRC_Quit($sock,"Error has occured - $message");
 		
 	}
 	
@@ -275,7 +292,7 @@
 	if ($IRC_Command_Type == 332) {
 	
 		// Lets get the actual topic message out of the raw string
-		$IRC_Topic = explode(":",$IRC_Msg);
+		$IRC_Topic = explode(" :",$IRC_Msg);
 		
 		// Because of a coding fuckup somewhere weve lost the # from the channel name :P so lets add it back
 		$IRC_Channel = "#$IRC_Topic[0]";
@@ -336,7 +353,10 @@
 		$IRC_Topic_mySQL_Result = mysql_query($IRC_Topic_mySQL_Query);
 		
 		// Show it in the console
-		IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Author: $IRC_Topic_Nickname Date: $IRC_Topic_Set");
+		IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Author: $IRC_Topic_Nickname");
+		
+		// And the date
+		IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Date: $IRC_Topic_Set");
 		
 	}
 	
@@ -378,7 +398,5 @@
 		}
 		
 	}
-	
-	
-	
+
 ?>

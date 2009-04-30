@@ -23,16 +23,12 @@
 			
 				// Get the addon filename and then print to the console, and then include the working file
 				$IRC_Addons_Command_File = mysql_result($IRC_Addons_mySQL_Result,$IRC_Addons_Temp_1,"filename");
-				$IRC_Addons_mySQL_Query_1 = "SELECT * FROM `nicks` WHERE `id` = '$IRC_Nick_ID'";
-				$IRC_Addons_mySQL_Result_1 = mysql_query($IRC_Addons_mySQL_Query_1);
-				$IRC_Nick = mysql_result($IRC_Addons_mySQL_Result_1,0,"nick");
+				$IRC_Nick = IRC_Nick_Lookup_ID("$IRC_Nick_ID");
 				
 				// Someone triggered this from a channel..  but what channel?
 				if($IRC_Channel_ID != 0) {
 					
-					$IRC_Addons_mySQL_Query_2 = "SELECT * FROM `channels` WHERE `id` = '$IRC_Channel_ID'";
-					$IRC_Addons_mySQL_Result_2 = mysql_query($IRC_Addons_mySQL_Query_2);
-					$IRC_Channel = mysql_result($IRC_Addons_mySQL_Result_2,0,"channel");
+					$IRC_Channel = IRC_Channel_Lookup_ID("$IRC_Channel_ID");
 					
 				// Someone triggered this from a private message.. bloody peen, blatently some script kiddie haxor
 				} else {
@@ -121,9 +117,7 @@
 		$IRC_Log_mySQL_Query = "SELECT * FROM `admins` WHERE `nick` = '$IRC_Admin_Acc'";
 		$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
 		$IRC_Admin_Acc = mysql_result($IRC_Log_mySQL_Result,0,"id");
-		$IRC_Log_mySQL_Query = "SELECT * FROM `nicks` WHERE `nick` = '$IRC_Admin_Name'";
-		$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
-		$IRC_Admin_ID = mysql_result($IRC_Log_mySQL_Result,0,"id");
+		$IRC_Admin_ID = IRC_Nick_Lookup("$IRC_Admin_Name","0");
 		
 		// Insert it into the log so errors, or security breaches can be checked up on
 		$IRC_Log_mySQL_Query = "INSERT INTO `logs_admin` (`time`,`acc`,`nick`,`log`) VALUES (NOW(),'$IRC_Admin_Acc','$IRC_Admin_ID','$IRC_Msg')";
@@ -145,6 +139,29 @@
 		
 			// Return the channel ID to the command
 			return mysql_result($IRC_mySQL_Result,0,"id");
+			
+		} else {
+		
+			return 0;
+			
+		}
+		
+	}
+	
+	// Lookup the channel's name from its id number
+	function IRC_Channel_Lookup_ID($IRC_Msg_Target) {
+	
+		// mySQL Query
+		$IRC_mySQL_Query = "SELECT * FROM `channels` WHERE `id` = '$IRC_Msg_Target'";
+		
+		// mySQL Result
+		$IRC_mySQL_Result = mysql_query($IRC_mySQL_Query);
+		$IRC_mySQL_Number = mysql_num_rows($IRC_mySQL_Result);
+		
+		if ($IRC_mySQL_Number > 0) {
+		
+			// Return the channel ID to the command
+			return mysql_result($IRC_mySQL_Result,0,"channel");
 			
 		} else {
 		
@@ -224,12 +241,15 @@
 		
 		// Get the PHP Process ID Number (Just for user information, it doesnt get stored anywhere till later on, like when it may be half useful)
 		$IRC_Bot_PID = getmypid();
+
+		// LimiBot Version		
+		$IRC_LimiBot_Version = IRC_Setting("Version");
 		
 		// Time for the bit that looks nice and purty :)
 		IRC_Logo();
 		IRC_Console("Info >> Name","LimiBot");
 		IRC_Console("Info >> Desc","PHP IRC Bot");
-		IRC_Console("Info >> Version","Public Release 0.6.2 beta");
+		IRC_Console("Info >> Version","$IRC_LimiBot_Version");
 		IRC_Console("Info >> Creator","Limited Edition!");
 		IRC_Console("Info >> E-Mail","limited@multiplay.co.uk");
 		IRC_Console("Info >> Web-Site","https://sourceforge.net/projects/limibot/ \n");
@@ -261,14 +281,10 @@
 			$IRC_Addons_Command_File = mysql_result($IRC_Addons_mySQL_Result,$IRC_Addons_Temp_1,"filename");
 			
 			// While were here we might aswell just get thier real nickname.. you know, just for laughs
-			$IRC_Addons_mySQL_Query_1 = "SELECT * FROM `nicks` WHERE `id` = '$IRC_Nick_ID'";
-			$IRC_Addons_mySQL_Result_1 = mysql_query($IRC_Addons_mySQL_Query_1);
-			$IRC_Nick = mysql_result($IRC_Addons_mySQL_Result_1,0,"nick");
+			$IRC_Nick = IRC_Nick_Lookup_ID("$IRC_Nick_ID");
 			
 			// Get the channel name where the nickname joined, because thats just a tad important.. some disagree though
-			$IRC_Addons_mySQL_Query_2 = "SELECT * FROM `channels` WHERE `id` = '$IRC_Channel_ID'";
-			$IRC_Addons_mySQL_Result_2 = mysql_query($IRC_Addons_mySQL_Query_2);
-			$IRC_Channel = mysql_result($IRC_Addons_mySQL_Result_2,0,"channel");
+			$IRC_Channel = IRC_Channel_Lookup_ID("$IRC_Channel_ID");
 			
 			// Wonder if anyone is actually reading all these... well.. anyway 
 			// You've now got $IRC_Channel_ID $IRC_Channel $IRC_Nick_ID $IRC_Nick available for you addon file
@@ -328,13 +344,8 @@
 	// Lookup the nickname's id from the stats database
 	function IRC_Nick_Lookup($IRC_Msg_Nick,$IRC_Channel_ID) {
 	
-		// mySQL Query
 		$IRC_mySQL_Query_1 = "SELECT * FROM `nicks` WHERE `nick` = '$IRC_Msg_Nick'";
-		
-		// mySQL Result
 		$IRC_mySQL_Result_1 = mysql_query($IRC_mySQL_Query_1);
-		
-		// Get the number of nicknames retrieved
 		$IRC_mySQL_Temp = mysql_num_rows($IRC_mySQL_Result_1);
 		
 		// Check to see if any nicknames were returned
@@ -371,6 +382,26 @@
 			
 		}
 
+	}
+	
+	// Lookup a nickname from its ID number
+	function IRC_Nick_Lookup_ID($IRC_NickLookup_ID) {
+	
+		$IRC_mySQL_Query_1 = "SELECT * FROM `nicks` WHERE `id` = '$IRC_NickLookup_ID'";
+		$IRC_mySQL_Result_1 = mysql_query($IRC_mySQL_Query_1);
+		$IRC_mySQL_Number_1 = mysql_num_rows($IRC_mySQL_Result_1);
+		
+		if ($IRC_mySQL_Number_1 > 0) {
+		
+			// Return the nick to the command
+			return mysql_result($IRC_mySQL_Result_1,0,"nick");
+			
+		} else {
+		
+			return 0;
+			
+		}
+		
 	}
 	
 	
@@ -410,69 +441,17 @@
 	// Get IRC Server Settings from the mySQL database
 	function IRC_Setting($IRC_Server_Setting) {
 	
-		if ($IRC_Server_Setting == 'ServerIP') {
+		// Get the Servers IP
+		$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = '$IRC_Server_Setting'";
+		$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
+		$IRC_Setting_mySQL_Number = mysql_num_rows($IRC_Settings_mySQL_Result);
 		
-			// Get the Servers IP
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'ServerIP'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
+		if ($IRC_Setting_mySQL_Number > 0) {
+		
 			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
+		
 		}
-		
-		if ($IRC_Server_Setting == 'ServerPort') {
-		
-			// Get the Servers Port
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'ServerPort'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
-		}
-		
-		if ($IRC_Server_Setting == 'ServerPass') {
-		
-			// Get the Servers Pass
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'ServerPass'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
-		}
-		
-		if ($IRC_Server_Setting == 'ServerNick') {
-		
-			// Get the Servers Nick
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'ServerNick'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
-		}
-		
-		if ($IRC_Server_Setting == 'NickIdentify') {
-		
-			// Get the Nickname Identifier Code
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'NickIdentify'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
-		}
-		
-		if ($IRC_Server_Setting == 'ShowRaw') {
-		
-			// Get the value for showing the raw irc code
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'ShowRaw'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
-		}
-		
-		if ($IRC_Server_Setting == 'BotStart') {
-		
-			// Get the value for showing the raw irc code
-			$IRC_Settings_mySQL_Query = "SELECT * FROM `settings` WHERE `setting` = 'BotStart'";
-			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-			return mysql_result($IRC_Settings_mySQL_Result,0,"value");
-			
-		}
-				
+	
 	}
 	
 	
@@ -574,14 +553,33 @@
 	}
 	
 	
-	
-	
 	// Update the Joins Statistic
 	function IRC_Stats_Joins($IRC_Nick_ID,$IRC_Channel_ID) {
 	
 		// Update the database
 		$IRC_Stat_mySQL_Query = "UPDATE `statistics` SET `joins` = `joins` + 1 WHERE `nick` = '$IRC_Nick_ID' AND `channel` = '$IRC_Channel_ID'";
 		$IRC_Stat_mySQL_Result = mysql_query($IRC_Stat_mySQL_Query);
+	
+	}
+	
+	
+	// Retrieve the topic for the specified channel id
+	function IRC_Topic($IRC_Channel_ID) {
+	
+		// Get the topic for the channel
+		$IRC_Topic_mySQL_Query = "SELECT * FROM `channels` WHERE `id` = '$IRC_Channel_ID'";
+		$IRC_Topic_mySQL_Result = mysql_query($IRC_Topic_mySQL_Query);
+		$IRC_Topic_mySQL_Number = mysql_num_rows($IRC_Topic_mySQL_Result);
+		
+		if ($IRC_Topic_mySQL_Number > 0) {
+		
+			$topic[message] = mysql_result($IRC_Topic_mySQL_Result,0,"topic_message");
+			$topic[author] = mysql_result($IRC_Topic_mySQL_Result,0,"topic_author");
+			$topic[timeset] = mysql_result($IRC_Topic_mySQL_Result,0,"topic_set");
+		
+			return $topic;
+		
+		}
 	
 	}
 	

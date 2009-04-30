@@ -1,4 +1,4 @@
-LimiBot - 0.6.2 Beta Public Release
+LimiBot - 0.6.3 Beta Public Release
 ===================================
 
 Installation
@@ -15,6 +15,7 @@ Installation
        BotStart - This is filled by the bot automatically
        ShowRaw - '1' to show the RAW IRC Commands in the console, '0' to hide them
        PID - This is filled by the bot automatically
+	   Version - Shows the version of LimiBot you have
 
   3) Open the 'limibot.php' file in a text editor...
 
@@ -24,6 +25,16 @@ Installation
        $IRC_mySQL_Info_DataB - The mySQL Database name
        
   4) Thats it your done! All other configuration is done by editing the various mySQL tables.
+  
+  
+Upgrading
+=========
+
+If you are upgrading from version 0.6.2-pr just overwrite all the files and run the following SQL command...
+
+INSERT INTO `settings` VALUES ('Version', '0.6.3 Beta (Public Release)', 'LimiBot Version Number');
+
+This is the only change to the databases in this update, the full list of changes can be found in the changelog.txt file.
 
 
 Starting the Bot

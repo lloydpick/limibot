@@ -135,6 +135,7 @@ INSERT INTO `settings` VALUES ('NickIdentify', '', 'NickServ Login Command');
 INSERT INTO `settings` VALUES ('BotStart', '', 'The time the bot connected to IRC (Automatically Entered)');
 INSERT INTO `settings` VALUES ('ShowRaw', '0', 'Show Raw IRC Commands in the Console');
 INSERT INTO `settings` VALUES ('PID', '', 'Process ID Number for the Bot');
+INSERT INTO `settings` VALUES ('Version', '0.6.3 Beta (Public Release)', 'LimiBot Version Number');
 
 CREATE TABLE `statistics` (
   `id` bigint(20) NOT NULL auto_increment,

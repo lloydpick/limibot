@@ -10,11 +10,11 @@
 	include ("irc_functions.php");
 	
 	// mySQL Database Settings
-	$IRC_mySQL_Info_Server = "";
-	$IRC_mySQL_Info_User = "";
-	$IRC_mySQL_Info_Pass = "";
-	$IRC_mySQL_Info_DataB = "";
-	
+        $IRC_mySQL_Info_Server = "localhost";
+        $IRC_mySQL_Info_User = "limibot";
+        $IRC_mySQL_Info_Pass = "botofwin";
+        $IRC_mySQL_Info_DataB = "limibot";
+
 	// Connect to the mySQL Database
 	IRC_mySQL_Connect("$IRC_mySQL_Info_Server","$IRC_mySQL_Info_User","$IRC_mySQL_Info_Pass","$IRC_mySQL_Info_DataB");
 	
