@@ -36,20 +36,20 @@
 	$IRC_Msg = substr($IRC_Msg_Msg_Temp,1,strlen($IRC_Msg_Msg_Temp)-1);
 	unset ($IRC_Msg_Msg_Temp);
 	
-	// Get the specific id for the channel from the stats database
-	$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Msg_Target");
-	
-	// Get the specific id for the nickname from the stats database
-	$IRC_Nick_ID = IRC_Nick_Lookup("$IRC_Msg_Nick","$IRC_Channel_ID");
-	
-	// Update a host for the specific nickname			
-	IRC_Host("$IRC_Nick_ID","$IRC_Channel_ID","$IRC_Msg_Host");
-
 	// Do this if the string is longer than 3 words
 	if (sizeof($command_) > 3) {
 	
 		// The highest number of commands come through here
 		if ($IRC_Command_Type == 'PRIVMSG') {
+		
+			// Get the specific id for the channel from the stats database
+			$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Msg_Target");
+			
+			// Get the specific id for the nickname from the stats database
+			$IRC_Nick_ID = IRC_Nick_Lookup("$IRC_Msg_Nick","$IRC_Channel_ID");
+			
+			// Update a host for the specific nickname			
+			IRC_Host("$IRC_Nick_ID","$IRC_Channel_ID","$IRC_Msg_Host");
 		
 			// Explode the message apart to see if its an ACTION or normal message
 			$IRC_CTCP_Check = substr($IRC_Msg, 0, 1);
@@ -78,27 +78,27 @@
 				
 					$IRC_LimiBot_Nickname = IRC_Setting("ServerNick");
 					$IRC_LimiBot_Version = IRC_Setting("Version");
-					IRC_Send($sock,"NOTICE $IRC_Msg_Nick :\001FINGER LimiBot - Nick: $IRC_LimiBot_Nickname\001\n\n");
+					IRC_Send("NOTICE $IRC_Msg_Nick :\001FINGER LimiBot - Nick: $IRC_LimiBot_Nickname\001\n\n");
 					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
 				
 				// Send a reply to the PING request
 				} else if ($IRC_CTCP[0] == "PING") {
 				
-					IRC_Send($sock,"NOTICE $IRC_Msg_Nick :\001PING $IRC_CTCP[1]\001\n\n");
+					IRC_Send("NOTICE $IRC_Msg_Nick :\001PING $IRC_CTCP[1]\001\n\n");
 					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
 				
 				// Send a reply to the TIME request
 				} else if ($IRC_CTCP[0] == "TIME") {
 				
 					$IRC_Time = date("D M d H:i:s Y T");
-					IRC_Send($sock,"NOTICE $IRC_Msg_Nick :\001TIME $IRC_Time\001\n\n");				
+					IRC_Send("NOTICE $IRC_Msg_Nick :\001TIME $IRC_Time\001\n\n");				
 					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
 				
 				// Send a reply to the VERSION request
 				} else if ($IRC_CTCP[0] == "VERSION") {
 				
 					$IRC_LimiBot_Version = IRC_Setting("Version");
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :\001VERSION LimiBot - $IRC_LimiBot_Version - https://sourceforge.net/projects/limibot/\001\n\n");				
+					IRC_Send("PRIVMSG $IRC_Msg_Nick :\001VERSION LimiBot - $IRC_LimiBot_Version - https://sourceforge.net/projects/limibot/\001\n\n");				
 					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
 					
 				}
@@ -110,19 +110,37 @@
 				IRC_Console("Msg","[C:$IRC_Channel_ID|N:$IRC_Nick_ID] <$IRC_Msg_Nick> $IRC_Msg");
 			
 			}
-						
+			
 			// Add it to the log
 			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Msg","$IRC_Msg");
-			
-			// Admin Commands
-			IRC_Admin($sock,"$IRC_Msg_Nick","$IRC_Msg","$IRC_Msg_Host","$IRC_Admin_Nick","$IRC_Admin_Pass","$IRC_Admin_Host");
 			
 			// Start the IRC Stats Parser
 			IRC_Stats("$IRC_Channel_ID","$IRC_Nick_ID","$IRC_Msg");
 			
 			// Starts the addon program
-			IRC_Addon("$IRC_Nick_ID","$IRC_Channel_ID","$IRC_Msg",$sock);
+			IRC_Addon("$IRC_Nick_ID","$IRC_Channel_ID","$IRC_Msg_Host","$IRC_Msg");
 						
+		}
+		
+		// This code will be run everytime a mode is changed.. oh the care, i can see it all over your face!
+		if ($IRC_Command_Type == 'MODE') {
+		
+			$IRC_Mode_Channel = $command_[2];
+			$IRC_Mode_Channel_ID = IRC_Channel_Lookup($IRC_Mode_Channel);
+			$IRC_Mode_Command = $command_[3];
+			$IRC_Mode_User = $command_[4];
+			
+			// This will be true if its a channel mode change, not that someone set a mode on no one ;P
+			if ($IRC_Mode_User == NULL) {
+			
+				IRC_Console("Mde","[C:$IRC_Mode_Channel_ID] $IRC_Msg_Nick sets mode: $IRC_Mode_Command");
+			
+			} else {
+			
+				IRC_Console("Mde","[C:$IRC_Mode_Channel_ID] $IRC_Msg_Nick sets mode: $IRC_Mode_Command $IRC_Mode_User");
+			
+			}
+		
 		}
 		
 		// This code will be run everytime a topic is shown or a topic is changed
@@ -184,6 +202,19 @@
 				IRC_Console("Admin","$IRC_Msg_Nick Logged Out (User Quit)");
 			
 			}
+			
+			$IRC_Quit = implode(" ", $command_);
+			$IRC_Quit = explode("QUIT :", $IRC_Quit);
+			$IRC_Quit = $IRC_Quit[1];
+			
+			// Lookup the ID of the nickname
+			$IRC_Nick_ID = IRC_Nick_Lookup("$IRC_Msg_Nick","0");
+			
+			// Show it in the console
+			IRC_Console("Svr","[N:$IRC_Nick_ID] $IRC_Msg_Nick Quit - $IRC_Quit");
+			
+			// Write it to the log
+			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Quit","$IRC_Quit");
 		
 		}
 		
@@ -222,7 +253,7 @@
 			if ($IRC_Kick_Nick == $IRC_Server_Nick) {
 			
 				// Send join command to the server
-				IRC_Send($sock,"JOIN $IRC_Msg_Target");
+				IRC_Send("JOIN $IRC_Msg_Target");
 			
 				// Print to the console about it
 				IRC_Console("Svr","Re-Joining $IRC_Msg_Target");
@@ -245,7 +276,7 @@
 		if ($IRC_Command_Type == 'PING') {
 		
 			// Off goes the ping reply
-			IRC_Send($sock,"PONG $IRC_Command_Msg");
+			IRC_Send("PONG $IRC_Command_Msg");
 			
 			// Display that were playing ping-pong... with words..   to the console
 			IRC_Console("Svr","Ping? Pong!");
@@ -277,7 +308,7 @@
 			IRC_Console("Svr","[N:$IRC_Nick_ID|C:$IRC_Channel_ID] $IRC_Msg_Nick Joined $IRC_Join_Channel");
 			
 			// Lets see if there are any addons to be run when someone joins a channel
-			IRC_Join_Addon("$IRC_Nick_ID","$IRC_Channel_ID",$sock);
+			IRC_Join_Addon("$IRC_Nick_ID","$IRC_Channel_ID");
 			
 			// Write it to the log
 			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Join","");
@@ -303,24 +334,106 @@
 			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Part","");
 		
 		}
+		
+		if ($IRC_Command_Type == 'NICK') {
+		
+			$IRC_New_Nick = substr("$command_[2]", 1);
+			IRC_Console("Svr","$IRC_Msg_Nick changed nickname to $IRC_New_Nick");
+		
+		}
 	
 	}
 	
 	// Vacate the server on an error, something fucked up..
 	if (ereg("^ERROR",$message)) {
 	
-		// Send quit command to IRC server, flee!
-		IRC_Quit($sock,"Error has occured - $message");
+		$message = substr("$message", 7);
+		
+		if ($message == "All connections in use") {
+		
+			// Send quit command to IRC server, flee!
+			IRC_Quit("Error has occured - Server is full, please try another");
+		
+		} else {
+		
+			// Send quit command to IRC server, flee!
+			IRC_Quit("Error has occured - $message");
+		
+		}	
 		
 	}
+	
+	// Part of the reply to a LUSERS request, this one contains toals users and server numbers,
+	if ($IRC_Command_Type == 251) {
+	
+		// Lets adjust the message slightly
+		$IRC_LUSERS = explode(" ",$IRC_Msg);
+		$IRC_LUSERS_Visible = $IRC_LUSERS[2];
+		$IRC_LUSERS_Invisible = $IRC_LUSERS[5];
+		$IRC_LUSERS_Total = $IRC_LUSERS_Visible + $IRC_LUSERS_Invisible;
+		$IRC_LUSERS_Servers = $IRC_LUSERS[8];
+		$IRC_LUSERS_Message[1] = "Total Users: $IRC_LUSERS_Total ($IRC_LUSERS_Invisible Invisible)";
+		$IRC_LUSERS_Message[2] = "$IRC_LUSERS_Servers Servers";
+	
+		$IRC_lusers_mySQL_Query = "INSERT INTO `temp` VALUES ('','Network_Users','$IRC_LUSERS_Message[1]')";
+		$IRC_lusers_mySQL_Result = mysql_query($IRC_lusers_mySQL_Query);
+		
+		$IRC_lusers_mySQL_Query = "INSERT INTO `temp` VALUES ('','Network_Servers','$IRC_LUSERS_Message[2]')";
+		$IRC_lusers_mySQL_Result = mysql_query($IRC_lusers_mySQL_Query);
+		
+	}
+	
+	
+	// Part of the reply to a LUSERS request, this one contains channel totals,
+	if ($IRC_Command_Type == 254) {
+	
+		// Lets adjust the message slightly
+		$IRC_LUSERS_Channels = $command_[3];
+		
+		$IRC_lusers_mySQL_Query = "SELECT * FROM `temp` WHERE `option` = 'Network_Users'";
+		$IRC_lusers_mySQL_Result = mysql_query($IRC_lusers_mySQL_Query);
+		$IRC_LUSERS_Message[1] = mysql_result($IRC_lusers_mySQL_Result,0,"value");
+		
+		$IRC_lusers_mySQL_Query = "DELETE FROM `temp` WHERE `option` = 'Network_Users'";
+		mysql_query($IRC_lusers_mySQL_Query);
+		
+		$IRC_lusers_mySQL_Query = "SELECT * FROM `temp` WHERE `option` = 'Network_Servers'";
+		$IRC_lusers_mySQL_Result = mysql_query($IRC_lusers_mySQL_Query);
+		$IRC_LUSERS_Message[2] = mysql_result($IRC_lusers_mySQL_Result,0,"value");
+		
+		$IRC_lusers_mySQL_Query = "DELETE FROM `temp` WHERE `option` = 'Network_Servers'";
+		mysql_query($IRC_lusers_mySQL_Query);
+		
+		$IRC_lusers_mySQL_Query = "OPTIMIZE TABLE `temp`";
+		mysql_query($IRC_lusers_mySQL_Query);
+				
+		IRC_Console("Svr","IRC Network Statistics");
+		IRC_Console("Svr","$IRC_LUSERS_Message[1]");
+		IRC_Console("Svr","$IRC_LUSERS_Message[2] - $IRC_LUSERS_Channels Channels");
+		
+	}
+	
 	
 	// Vacate the server on connect if primary nickname is in use, someones being an annoying nick stealing peen
 	if ($IRC_Command_Type == 433 && $nickcheck == 0) {
 	
-		// Send quit command to IRC server, swim away!
-		IRC_Quit($sock,"Primary Nickname In Use");
+		// Tell the console that our first nickname is in use
+		IRC_Console("Svr","Primary Nickname In Use");
+		
+		// Get the secondary nickname out the database
+		$IRC_Server_NickSecondary = IRC_Setting(ServerNickSecondary);
+		
+		// Tell the console we are changing nickname
+		IRC_Console("Svr","Changing Nickname to '$IRC_Server_NickSecondary'");
+		
+		// Change the nickname
+		IRC_Send("nick $IRC_Server_NickSecondary");
+		
+		// So we don't keep running this...
+		$nickcheck = 1;
 		
 	}
+	
 	
 	// Part of the reply to a TOPIC request, other half is in 333
 	if ($IRC_Command_Type == 332) {
@@ -337,9 +450,6 @@
 		// Because channel name is like.. useless, lets get the channel id specified in the database
 		$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Channel");
 	
-		// Add some slashes so that there wont be problems with quote marks and evil shit like that
-		$IRC_Topic = addslashes($IRC_Topic);
-			
 		// Update the database with the message
 		$IRC_Topic_mySQL_Query = "UPDATE `channels` SET `topic_message` = '$IRC_Topic' WHERE `id` = '$IRC_Channel_ID'";
 		$IRC_Topic_mySQL_Result = mysql_query($IRC_Topic_mySQL_Query);
@@ -424,8 +534,11 @@
 			// Get the channel name from the database
 			$IRC_Join_Channel = mysql_result($IRC_Join_mySQL_Result,$IRC_Join_mySQL_Temp,"channel");
 			
-			// Send join command to the server
-			IRC_Send($sock,"JOIN $IRC_Join_Channel");
+			// Get the channel key from the database
+			$IRC_Join_Channel_Key = mysql_result($IRC_Join_mySQL_Result,$IRC_Join_mySQL_Temp,"key");
+			
+			// Join the channel
+			IRC_Join("$IRC_Join_Channel","$IRC_Join_Channel_Key");
 			
 			// Usual bollocks, increase the loop start again.. yada yada yada
 			$IRC_Join_mySQL_Temp++;

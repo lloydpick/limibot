@@ -1,4 +1,4 @@
-LimiBot - 0.6.4 Beta Public Release
+LimiBot - 0.6.5 Beta Public Release
 ===================================
 
 Installation
@@ -11,11 +11,9 @@ Installation
        ServerPort - The Port of the IRC Server
        ServerPass - The Password (if any) of the IRC Server
        ServerNick - The Nickname of your bot
-       NickIdentify - RAW IRC Command to Authenticate your Bot with IRC Server Services
-       BotStart - This is filled by the bot automatically
+       ServerNickSecondary - The Secondary Nickname of your bot, incase the first is in use
+       NickIdentify - RAW IRC Command to Authenticate your Bot with IRC Server Services (if any)
        ShowRaw - '1' to show the RAW IRC Commands in the console, '0' to hide them
-       PID - This is filled by the bot automatically
-       Version - Shows the version of LimiBot you have
 
   3) Open the 'limibot.php' file in a text editor...
 
@@ -30,20 +28,22 @@ Installation
 Upgrading
 =========
 
-If you are upgrading from a previous version just overwrite all the files and run the following SQL command...
+  If you are upgrading from a previous version open up the upgrade065.php file in a text editor and edit
+  the SQL variables. Then run the update065.php file from the command line...
+  
+  "php upgrade065.php"
+  
+  This will update your SQL tables to 0.6.5 of limibot.
 
-INSERT INTO `settings` VALUES ('Version', '0.6.4 Beta (Public Release)', 'LimiBot Version Number');
-
-This is the only change to the databases in this update, the full list of changes can be found in the changelog.txt file.
-
+  You MUST do this if you want to update, MUST!
 
 Starting the Bot
 ================
 
   *nix - "screen -S limibot"
-         "php -q limibot.php"
+         "php limibot.php"
 
-  win32 - "php -q limibot.php"
+  win32 - "php limibot.php"
 
 
 Unfortuantly there is no more documentation for this release, expect more in the next version.
@@ -51,8 +51,17 @@ If you encounter any bugs (which you probably will) please post on the bug track
 
 https://sourceforge.net/projects/limibot/
 lloydpick@users.sourceforge.net
+#LimiNET on Quakenet
+
+If you want some support either post on the SourceForge site, or come find me (Limited) in #LimiNET
+on Quakenet. However, finding me on IRC is an option, I may not be around. Some other people who might
+be able to answer your question are "Moredhel" and "Murray-Mint" who also can be found in the #LimiNET
+IRC channel on Quakenet.
+
+Also if your feeling really nice, you could donate some money to us to help pay with server costs, you
+can do this on SourceForge.. http://sourceforge.net/donate/index.php?group_id=107020 Your donation will
+be recieved with thanks by the whole of the LimiBot Dev Team.
 
 Thanks!
 
-Limited-Edition!
-#LimiNET on Quakenet if you want to have a chat!
+Limited-Edition

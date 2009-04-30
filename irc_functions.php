@@ -1,10 +1,10 @@
 <?php
 
 	// Send an action to the target with message
-	function IRC_Action($sock,$IRC_Target,$IRC_Message) {
-
+	function IRC_Action($IRC_Target,$IRC_Message) {
+		
 		// Send the data across the socket
-		IRC_Send($sock,"PRIVMSG $IRC_Target :\001ACTION $IRC_Message");
+		IRC_Send("PRIVMSG $IRC_Target :\001ACTION $IRC_Message");
 
 		// Print it to the console
 		IRC_Console("Msg","ACTION --> $IRC_Target - $IRC_Message");
@@ -12,7 +12,7 @@
 	}
 
 	// Checks for, and then runs any addons
-	function IRC_Addon($IRC_Nick_ID,$IRC_Channel_ID,$IRC_Msg,$sock) {
+	function IRC_Addon($IRC_Nick_ID,$IRC_Channel_ID,$IRC_Host,$IRC_Msg) {
 
 		// Get the number of addons in the system
 		$IRC_Addons_mySQL_Query = "SELECT * FROM `commands` WHERE `active` = 1";
@@ -28,8 +28,8 @@
 			// Cycle through the commands until one is matched
 			$IRC_Addons_Command = mysql_result($IRC_Addons_mySQL_Result,$IRC_Addons_Temp_1,"command");
 
-			// If a command match is found...
-			if ($IRC_Addons_Command_Reqested == $IRC_Addons_Command) {
+			// If a command match is found or we find an addon which gets run all the time...
+			if ($IRC_Addons_Command_Reqested == $IRC_Addons_Command OR $IRC_Addons_Command == "NOTRIGGER") {
 
 				// Get the addon filename and then print to the console, and then include the working file
 				$IRC_Addons_Command_File = mysql_result($IRC_Addons_mySQL_Result,$IRC_Addons_Temp_1,"filename");
@@ -46,8 +46,15 @@
 					$IRC_Channel = "a Private Message";
 
 				}
+				
+				// If this is a addon we want to run everytime somethings said we dont want something echo'd to the console everytime
+				if ($IRC_Addons_Command != "NOTRIGGER") {
 
-				IRC_Console("Adn","Addon $IRC_Addons_Command_Reqested requested by $IRC_Nick in $IRC_Channel");
+					IRC_Console("Adn","Addon $IRC_Addons_Command_Reqested requested by $IRC_Nick in $IRC_Channel");
+					
+				}
+				
+				// Run the file
 				include("./addons/$IRC_Addons_Command_File");
 
 			}
@@ -94,82 +101,16 @@
 
 	}
 
-	// Admin Commands
-	function IRC_Admin($sock,$IRC_Msg_Nick,$IRC_Msg,$IRC_Msg_Host,$IRC_Admin_Nick,$IRC_Admin_Pass,$IRC_Admin_Host) {
 
-		// Include the file so that we can edit on the fly
-		include ("irc_admin.php");
-
+	// So you can add bold to your message
+	function IRC_Bold($IRC_Msg) {
+	
+		$IRC_Msg = "\002$IRC_Msg\002";
+		return $IRC_Msg;
+	
 	}
-
-	// Check to see if the Admin has access to a specific command
-	function IRC_Admin_Allowed($IRC_Command,$IRC_Nick,$IRC_Msg,$sock) {
-
-		// Get the account the admin is currently logged into
-		$IRC_Admin_mySQL_Query = "SELECT * FROM `admins_temp` WHERE `admin` = '$IRC_Nick'";
-		$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
-		$IRC_Admin_Account = mysql_result($IRC_Admin_mySQL_Result,0,"account");
-
-		// Get the command ID that the admin is attempting to access
-		$IRC_Admin_mySQL_Query = "SELECT * FROM `admins_commands` WHERE `command` = '$IRC_Command'";
-		$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
-		$IRC_Admin_CommandID = mysql_result($IRC_Admin_mySQL_Result,0,"id");
-
-		// Now check to see if the admin has access to use the specified command
-		$IRC_Admin_mySQL_Query = "SELECT * FROM `admins` WHERE `nick` = '$IRC_Admin_Account' AND `access` LIKE '% $IRC_Admin_CommandID %'";
-		$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
-		$IRC_Admin_mySQL_Number = mysql_num_rows($IRC_Admin_mySQL_Result);
-
-		// If the admin does have access
-		if($IRC_Admin_mySQL_Number == 1) {
-
-			// Print to the console about whats happened
-			IRC_Console("Admin","Access Granted for $IRC_Nick, Command '$IRC_Command'");
-
-			// Write this to the admin log
-			IRC_Admin_Log("$IRC_Nick","$IRC_Msg");
-
-			// This is sent so the command can be run
-			return 1;
-
-		// If the admin does NOT have access
-		} else {
-
-			// Print to the console about whats happened
-			IRC_Console("Admin","Access Denied for $IRC_Nick, Command '$IRC_Command'");
-
-			// Tell the admin about it
-			IRC_Message($sock,"$IRC_Nick","Access Denied");
-
-			// Write this to the admin log
-			IRC_Admin_Log("$IRC_Nick","ACCESS DENIED - $IRC_Msg");
-
-			// This is sent so the command can't be run
-			return 0;
-
-		}
-
-	}
-
-	// Adds the chat line to the mySQL log
-	function IRC_Admin_Log($IRC_Admin_ID,$IRC_Msg) {
-
-		// Get the admin account in use and the admins nickname
-		$IRC_Log_mySQL_Query = "SELECT * FROM `admins_temp` WHERE `admin` = '$IRC_Admin_ID'";
-		$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
-		$IRC_Admin_Name = mysql_result($IRC_Log_mySQL_Result,0,"admin");
-		$IRC_Admin_Acc = mysql_result($IRC_Log_mySQL_Result,0,"account");
-		$IRC_Log_mySQL_Query = "SELECT * FROM `admins` WHERE `nick` = '$IRC_Admin_Acc'";
-		$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
-		$IRC_Admin_Acc = mysql_result($IRC_Log_mySQL_Result,0,"id");
-		$IRC_Admin_ID = IRC_Nick_Lookup("$IRC_Admin_Name","0");
-
-		// Insert it into the log so errors, or security breaches can be checked up on
-		$IRC_Log_mySQL_Query = "INSERT INTO `logs_admin` (`time`,`acc`,`nick`,`log`) VALUES (NOW(),'$IRC_Admin_Acc','$IRC_Admin_ID','$IRC_Msg')";
-		$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
-
-	}
-
+	
+	
 	// Lookup the channel's id from the stats database
 	function IRC_Channel_Lookup($IRC_Msg_Target) {
 
@@ -255,20 +196,20 @@
 	}
 
 	// Send a ctcp request to the target
-	function IRC_Ctcp($sock,$IRC_Target,$IRC_Type) {
+	function IRC_Ctcp($IRC_Target,$IRC_Type) {
 
 		if ($IRC_Type == "VERSION") {
 
-			IRC_Send($sock,"PRIVMSG $IRC_Target :\001VERSION");
+			IRC_Send("PRIVMSG $IRC_Target :\001VERSION");
 
 		} else {
 
-			IRC_Send($sock,"NOTICE $IRC_Target :\001$IRC_Type");
+			IRC_Send("NOTICE $IRC_Target :\001$IRC_Type");
 
 		}
 
 		// Send the data across the socket
-		IRC_Send($sock,"PRIVMSG $IRC_Target :\001$IRC_Type");
+		IRC_Send("PRIVMSG $IRC_Target :\001$IRC_Type");
 
 		// Print it to the console
 		IRC_Console("Ctp","CTCP $IRC_Type --> $IRC_Target");
@@ -317,9 +258,30 @@
 		IRC_Console("Svr","Temporary Administration Login Tables Wiped");
 
 	}
+	
+	
+	// Joins channels, another poor excuse for a function
+	function IRC_Join($IRC_Join_Channel,$IRC_Join_Key) {
+	
+		// If the channel doesnt have a key
+		if ($IRC_Join_Key == NULL) {
+		
+			// Join the new channel
+			IRC_Send("JOIN $IRC_Join_Channel");
+		
+		// If it does...
+		} else {
+		
+			// Join the new channel
+			IRC_Send("JOIN $IRC_Join_Channel $IRC_Join_Key");
+		
+		}
+	
+	}
+	
 
 	// Checks for, and then runs any addons
-	function IRC_Join_Addon($IRC_Nick_ID,$IRC_Channel_ID,$sock) {
+	function IRC_Join_Addon($IRC_Nick_ID,$IRC_Channel_ID) {
 
 		// Get the number of addons in the system
 		$IRC_Addons_mySQL_Query = "SELECT * FROM `commands_joins` WHERE `active` = 1";
@@ -400,10 +362,18 @@
 
 		// Check to make sure its not a admin logging in with passwords that could be stolen etc
 		if ($IRC_Channel_ID != 0) {
-
+		
 			// mySQL Insert Command
 			$IRC_Log_mySQL_Query = "INSERT INTO `logs` (`time`,`nick`,`channel`,`type`,`log`) VALUES (NOW(),'$IRC_Nick_ID','$IRC_Channel_ID','$IRC_Log_Type','$IRC_Msg')";
 			$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
+			
+		}
+		
+		if ($IRC_Log_Type == "Quit") {
+			
+				// mySQL Insert Command
+				$IRC_Log_mySQL_Query = "INSERT INTO `logs` (`time`,`nick`,`channel`,`type`,`log`) VALUES (NOW(),'$IRC_Nick_ID','$IRC_Channel_ID','$IRC_Log_Type','$IRC_Msg')";
+				$IRC_Log_mySQL_Result = mysql_query($IRC_Log_mySQL_Query);
 
 		}
 
@@ -424,10 +394,10 @@
 
 
 	// Send a message to the target with message
-	function IRC_Message($sock,$IRC_Target,$IRC_Message) {
+	function IRC_Message($IRC_Target,$IRC_Message) {
 
 		// Send the data across the socket
-		IRC_Send($sock,"PRIVMSG $IRC_Target :$IRC_Message");
+		IRC_Send("PRIVMSG $IRC_Target :$IRC_Message");
 
 		// Print it to the console
 		IRC_Console("Msg","PRIVMSG --> $IRC_Target - $IRC_Message");
@@ -442,6 +412,12 @@
 
 		// Select the correct mySQL database
 		mysql_select_db("$IRC_mySQL_Info_DataB",$IRC_mySQL_String);
+		
+		// Unset the variables for security
+		unset($IRC_mySQL_Info_Server);
+		unset($IRC_mySQL_Info_User);
+		unset($IRC_mySQL_Info_Pass);
+		unset($IRC_mySQL_Info_DataB);
 
 	}
 
@@ -507,12 +483,25 @@
 		}
 
 	}
+	
+	
+	// Used to part channels, doesnt happen often but what the heck...
+	function IRC_Part($IRC_Part_Channel) {
+	
+		// And away that channel goes!
+		IRC_Send("PART $IRC_Part_Channel");
+		
+		// God what a useless function.. why'd I bother...
+		// Oh yeah I know why!! Wait... no I don't....   damn
+		
+	}
+	
 
 	// Send a notice to the target with message
-	function IRC_Notice($sock,$IRC_Target,$IRC_Message) {
+	function IRC_Notice($IRC_Target,$IRC_Message) {
 
 		// Send the data across the socket
-		IRC_Send($sock,"NOTICE $IRC_Target :$IRC_Message");
+		IRC_Send("NOTICE $IRC_Target :$IRC_Message");
 
 		// Print it to the console
 		IRC_Console("Msg","NOTICE --> $IRC_Target - $IRC_Message");
@@ -521,22 +510,30 @@
 
 
 	// Quits the IRC network
-	function IRC_Quit($sock,$reason) {
+	function IRC_Quit($reason) {
+	
+		// If the admin was lazy and didnt provide a reason lets set one
+		if ($reason == NULL) {
+		
+			$reason = "LimiBot - https://sourceforge.net/projects/limibot/ ";
+		
+		}
 
 		// Send the data across the socket
-		IRC_Send($sock,"quit $reason");
+		IRC_Send("quit :$reason");
 
 		// Print quit info to console
 		IRC_Console("Quit","$reason");
-
-		// Exit the php file so it restarts when using the bat file to start
-		exit;
+		
+		// Exit out the main horrible evil death loop from hell
+		global $loop;
+		$loop = -1;
 
 	}
 
 
 	// Raw IRC Parser
-	function IRC_Raw($message,$sock,$IRC_Admin_Nick,$IRC_Admin_Pass,$IRC_Admin_Host) {
+	function IRC_Raw($message) {
 
 		// Include the file so that we can edit on the fly
 		include ("irc_raw.php");
@@ -545,13 +542,14 @@
 
 
 	// Allows commands to be sent to the server
-	function IRC_Send($sock,$message) {
+	function IRC_Send($message) {
 
 		// Send the data across the socket
-		fputs($sock,"$message \r\n");
+		global $sock;
+		fputs($sock,"$message\r\n");
 
 	}
-
+	
 
 	// Get IRC Server Settings from the mySQL database
 	function IRC_Setting($IRC_Server_Setting) {
@@ -571,13 +569,11 @@
 
 
 	// The main function
-	function IRC_Start($IRC_Server_IP,$IRC_Server_Port,$IRC_Server_Pass,$IRC_Server_Nick,$IRC_Admin_Nick,$IRC_Admin_Pass,$IRC_Admin_Host) {
+	function IRC_Start($IRC_Server_IP,$IRC_Server_Port,$IRC_Server_Pass,$IRC_Server_Nick) {
 
 		// Attempts to Connect to the IRC Server
+		global $sock;
 		$sock = fsockopen("$IRC_Server_IP","$IRC_Server_Port");
-
-		// $loop is added so we can perform startup operations
-		$loop = 1;
 
 		// $nickcheck added so we can quit the network if the bots nickname is already in use
 		$nickcheck = 0;
@@ -600,55 +596,74 @@
 			// $IRC_BotStart = date(YmdGis);
 			$IRC_Settings_mySQL_Query = "UPDATE `settings` SET `value` = $IRC_BotStart WHERE `setting` = 'BotStart'";
 			$IRC_Settings_mySQL_Result = mysql_query($IRC_Settings_mySQL_Query);
-
-			// Start the main number loop, this is really fucking evil and dumb, i'v got to find another way of doing this tbh
-			while ($loop > 0) {
-
+			
+			// So the bot doesnt just drop out when no one says anything for a whilefor some reason
+			stream_set_timeout($sock, 120);
+			$status = socket_get_status($sock);
+			
+			// Start the main number loop
+			global $loop;
+			$loop = 0;
+			global $sock;
+			while(!feof($sock) && !$status['timed_out']) {
+				
 				// Get data from the socket and print it to the console
 				$irc = fgets($sock, 1024);
+				$status = socket_get_status($sock);
+				
+				if ($irc != NULL) {
+				
+					$irc = addslashes($irc);
 
-				// First things first, lets bin the two new lines at the end of the string
-				$irc = substr($irc, 0, -2);
-
-				// Check to see if we write the raw irc to the console
-				$IRC_ShowRaw = IRC_Setting(ShowRaw);
-
-				// Do we show the raw?
-				if($IRC_ShowRaw == 1) {
-
-					// Show the raw incoming code
-					IRC_Console("Raw","$irc");
-
+					// First things first, lets bin the two new lines at the end of the string
+					$irc = substr($irc, 0, -2);
+	
+					// Check to see if we write the raw irc to the console
+					$IRC_ShowRaw = IRC_Setting(ShowRaw);
+	
+					// Do we show the raw?
+					if($IRC_ShowRaw == 1) {
+	
+						// Show the raw incoming code
+						IRC_Console("Raw","$irc");
+	
+					}
+	
+					// This is where we place things we only want to be sent once to the server at startup
+					if ($loop == 2) {
+	
+						IRC_Console("Svr","Sending Password");
+						IRC_Send("pass $IRC_Server_Pass");
+						IRC_Console("Svr","Setting Nick");
+						IRC_Send("nick $IRC_Server_Nick");
+						IRC_Console("Svr","Registering (This may take up to 2minutes)");
+						IRC_Send("user $IRC_Server_Nick $IRC_Server_IP $IRC_Server_IP LimiBot");
+	
+					}
+	
+					// Place NickServ Login Here
+					if ($loop == 10) {
+	
+						// Get the specific command to identify from the database
+						$IRC_Admin_NickIdentify = IRC_Setting(NickIdentify);
+	
+						// Send it to the IRC server
+						IRC_Send("$IRC_Admin_NickIdentify");
+	
+						// Print to the console that the command was sent
+						IRC_Console("Svr","Identified to NickServ");
+	
+					}
+	
+					// Send the raw irc string to the parser
+					IRC_Raw($irc);
+					
+				} else {
+				
+					// This shouldnt ever happen.. EVER.. but if it does...
+					IRC_Console("Svr","Recieved Blank Packet - Ignoring");
+				
 				}
-
-				// This is where we place things we only want to be sent once to the server at startup
-				if ($loop == 2) {
-
-					IRC_Console("Svr","Sending Password");
-					IRC_Send($sock,"pass $IRC_Server_Pass");
-					IRC_Console("Svr","Setting Nick");
-					IRC_Send($sock,"nick $IRC_Server_Nick");
-					IRC_Console("Svr","Registering (This may take up to 2minutes)");
-					IRC_Send($sock,"user $IRC_Server_Nick $IRC_Server_IP $IRC_Server_IP LimiBot");
-
-				}
-
-				// Place NickServ Login Here
-				if ($loop == 10) {
-
-					// Get the specific command to identify from the database
-					$IRC_Admin_NickIdentify = IRC_Setting(NickIdentify);
-
-					// Send it to the IRC server
-					IRC_Send($sock,"$IRC_Admin_NickIdentify");
-
-					// Print to the console that the command was sent
-					IRC_Console("Svr","Identified to NickServ");
-
-				}
-
-				// Send the raw irc string to the parser
-				IRC_Raw($irc,$sock,"$IRC_Admin_Nick","$IRC_Admin_Pass","$IRC_Admin_Host");
 
 				// Start the loop again
 				$loop++;
@@ -658,7 +673,25 @@
 				flush();
 
 			}
-
+			
+			// EXTREMLY BETA CODE - COMPLETLY UNTESTED
+			if ($status['timed_out']) {
+			
+				IRC_Console("Svr","Error has occured - Timed Out");
+				IRC_Console("Svr","Restarting Bot...");
+				
+				// Disconnect the bot
+				global $restart;
+					
+				// This will tell the bot to start the main function again
+				$restart = 1;
+					
+				// Restart the global loop
+				global $loop;
+				$loop = 0;
+				
+			}
+			
 		}
 
 	}
