@@ -1,0 +1,47 @@
+LimiBot - 0.6.2 Beta Public Release
+===================================
+
+Installation
+============
+
+  1) Load the sql dump into a database of your choice, I highly recommend phpMyAdmin (http://www.phpmyadmin.net) for this stage
+  2) Browse to the 'settings' table, and edit...
+     
+       ServerIP - The IP of the IRC Server you wish to connect to
+       ServerPort - The Port of the IRC Server
+       ServerPass - The Password (if any) of the IRC Server
+       ServerNick - The Nickname of your bot
+       NickIdentify - RAW IRC Command to Authenticate your Bot with IRC Server Services
+       BotStart - This is filled by the bot automatically
+       ShowRaw - '1' to show the RAW IRC Commands in the console, '0' to hide them
+       PID - This is filled by the bot automatically
+
+  3) Open the 'limibot.php' file in a text editor...
+
+       $IRC_mySQL_Info_Server - The location of your mySQL database
+       $IRC_mySQL_Info_User - The mySQL Username
+       $IRC_mySQL_Info_Pass - The mySQL Password
+       $IRC_mySQL_Info_DataB - The mySQL Database name
+       
+  4) Thats it your done! All other configuration is done by editing the various mySQL tables.
+
+
+Starting the Bot
+================
+
+  *nix - "screen -S limibot"
+         "php -q limibot.php"
+
+  win32 - "php -q limibot.php"
+
+
+Unfortuantly there is no more documentation for this release, expect more in the next version.
+If you encounter any bugs (which you probably will) please post on the bug tracker on the sourceforge page...
+
+https://sourceforge.net/projects/limibot/
+lloydpick@users.sourceforge.net
+
+Thanks!
+
+Limited-Edition!
+#LimiNET on Quakenet if you want to have a chat!
