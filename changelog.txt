@@ -1,20 +1,37 @@
 ____________________________________________________________________________________________________________
-	LimiBot Development Change Log - 0.6.3 Public Release 
+ LimiBot Development Change Log - 0.6.4 Public Release 
 ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-		- Added function IRC_Channel_Lookup_ID() to lookup a channel from its ID number,
-		- Added function IRC_Nick_Lookup_ID() to lookup a nickname from its ID number,
-		- Added function IRC_Topic() to lookup the topic of any channel the bot is in,
-		- Added addon addon_version.php which simply prints the version of limibot you are using,
-		- Adjusted the IRC_Setting() command so that people can add thier own settings for addons etc,
-		- Adjusted the output of how the topic is shown in the console,
-		- Cleaned up irc_functions() some more,
-		- Fixed the bug where the bot wouldnt rejoin the channel when kicked,
-		- Fixed the bug with the topic code not being stored correctly when a URL was part of it,
-		- Fixed the bug where when the bot quit due to an error it would'nt tell you what went wrong,
-		- Removed redundent code from irc_functions.php,
-		- Removed redundent code from irc_raw.php,
-		
-		
-		
-		
-		
+	- Added function IRC_Action() to send actions to channels or nicknames easier than IRC_Send(),
+	- Added function IRC_Addon_Info() to lookup addon information from the filename specified,
+	- Added function IRC_CTCP() to send ctcp queries to channels or nicknames easier than IRC_Send(),
+	- Added function IRC_Join_Addon_Info() to lookup join addon info from the filename specified,
+	- Added function IRC_Message() to send messages to channels or nicknames easier than IRC_Send(),
+	- Added function IRC_Notice() to send notices to channels or nicknames easier than IRC_Send(),
+	- Adjusted output of channel parts to show the channel that the nickname left rather than the id,
+	- Bot will now reply to CTCP queries, specifically, ACTION, FINGER, PING, TIME and VERSION,
+	- Changed the e-mail shown when the bot boots up to the right e-mail address,
+	- Cleaned up IRC_Console() by removing some options, which are un-needed,
+	- Console will now tell you when the bot has connected successfully,
+	- Fixed admin commands only being case sensitive,
+	- Fixed bug with the admin command 'ADD CHANNEL' would'nt actually add the channel,
+	- Fixed bug with the admin system where an admin could stay logged in if the bot crashed,
+	- Fixed bug with the connect code where if a server password was stated, it wasnt being sent,
+	- Fixed bug with the topic display code not showing a human readable set time,
+	- Fixed display bug when the bot was joining channels and it was being shown twice,
+	- Fixed the way line breaks are removed so its only done once,
+	- Replaced all IRC_Send() calls where they can use the new commands,
+____________________________________________________________________________________________________________
+ LimiBot Development Change Log - 0.6.3 Public Release 
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+	- Added function IRC_Channel_Lookup_ID() to lookup a channel from its ID number,
+	- Added function IRC_Nick_Lookup_ID() to lookup a nickname from its ID number,
+	- Added function IRC_Topic() to lookup the topic of any channel the bot is in,
+	- Added addon addon_version.php which simply prints the version of limibot you are using,
+	- Adjusted the IRC_Setting() command so that people can add thier own settings for addons etc,
+	- Adjusted the output of how the topic is shown in the console,
+	- Cleaned up irc_functions() some more,
+	- Fixed the bug where the bot wouldnt rejoin the channel when kicked,
+	- Fixed the bug with the topic code not being stored correctly when a URL was part of it,
+	- Fixed the bug where when the bot quit due to an error it would'nt tell you what went wrong,
+	- Removed redundent code from irc_functions.php,
+	- Removed redundent code from irc_raw.php,

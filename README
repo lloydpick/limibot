@@ -1,4 +1,4 @@
-LimiBot - 0.6.3 Beta Public Release
+LimiBot - 0.6.4 Beta Public Release
 ===================================
 
 Installation
@@ -15,7 +15,7 @@ Installation
        BotStart - This is filled by the bot automatically
        ShowRaw - '1' to show the RAW IRC Commands in the console, '0' to hide them
        PID - This is filled by the bot automatically
-	   Version - Shows the version of LimiBot you have
+       Version - Shows the version of LimiBot you have
 
   3) Open the 'limibot.php' file in a text editor...
 
@@ -30,9 +30,9 @@ Installation
 Upgrading
 =========
 
-If you are upgrading from version 0.6.2-pr just overwrite all the files and run the following SQL command...
+If you are upgrading from a previous version just overwrite all the files and run the following SQL command...
 
-INSERT INTO `settings` VALUES ('Version', '0.6.3 Beta (Public Release)', 'LimiBot Version Number');
+INSERT INTO `settings` VALUES ('Version', '0.6.4 Beta (Public Release)', 'LimiBot Version Number');
 
 This is the only change to the databases in this update, the full list of changes can be found in the changelog.txt file.
 

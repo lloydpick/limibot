@@ -1,5 +1,5 @@
 <?php
-
+	
 	// Split the string up
 	$command = explode(" ",$message);
 	$command_ = $command;
@@ -52,29 +52,65 @@
 		if ($IRC_Command_Type == 'PRIVMSG') {
 		
 			// Explode the message apart to see if its an ACTION or normal message
-			$IRC_Msg_ActionCheck = substr($IRC_Msg, 1);
-			$IRC_Msg_ActionCheck = explode(" ",$IRC_Msg_ActionCheck);
+			$IRC_CTCP_Check = substr($IRC_Msg, 0, 1);
 			
-			// If its an action... (case sensitive now, lets not spark it off with someone being a director and starting a film! THIS ISNT A FILM SET FOR GOD SAKE)
-			if ($IRC_Msg_ActionCheck[0] === "ACTION") {
+			// All CTCP commands start with \001 so if this is true, its CTCP
+			if ($IRC_CTCP_Check == "\001") {
 			
-				// Lets not play around with the main $IRC_Msg, as we might break something if we remove the ACTION from it
-				// Plus if we ever want to look at the log, we wont have a clue what ones are ACTIONS and which ones arnt
-				// ...and im bored
-				$IRC_Msg_Action = $IRC_Msg;
-				$IRC_Msg_Action = substr($IRC_Msg_Action, 8);
+				// Take the ctcp control code off the front
+				$IRC_CTCP = substr($IRC_Msg, 1);
+				$IRC_CTCP = substr($IRC_CTCP, 0, -1);
+				$IRC_CTCP = explode(" ",$IRC_CTCP);
 				
-				// Send it to the console command for printing
-				IRC_Console("Msg","[C:$IRC_Channel_ID|N:$IRC_Nick_ID] * $IRC_Msg_Nick $IRC_Msg_Action");
+				if ($IRC_CTCP[0] == "ACTION") {
 				
+					// Lets not play around with the main $IRC_Msg, as we might break something if we remove the ACTION from it
+					// Plus if we ever want to look at the log, we wont have a clue what ones are ACTIONS and which ones arnt
+					// ...and im bored
+					$IRC_Msg_Action = $IRC_Msg;
+					$IRC_Msg_Action = substr($IRC_Msg_Action, 8);
+					
+					// Send it to the console command for printing
+					IRC_Console("Msg","[C:$IRC_Channel_ID|N:$IRC_Nick_ID] * $IRC_Msg_Nick $IRC_Msg_Action");
+				
+				// Send a reply to the FINGER request
+				} else if ($IRC_CTCP[0] == "FINGER") {
+				
+					$IRC_LimiBot_Nickname = IRC_Setting("ServerNick");
+					$IRC_LimiBot_Version = IRC_Setting("Version");
+					IRC_Send($sock,"NOTICE $IRC_Msg_Nick :\001FINGER LimiBot - Nick: $IRC_LimiBot_Nickname\001\n\n");
+					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
+				
+				// Send a reply to the PING request
+				} else if ($IRC_CTCP[0] == "PING") {
+				
+					IRC_Send($sock,"NOTICE $IRC_Msg_Nick :\001PING $IRC_CTCP[1]\001\n\n");
+					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
+				
+				// Send a reply to the TIME request
+				} else if ($IRC_CTCP[0] == "TIME") {
+				
+					$IRC_Time = date("D M d H:i:s Y T");
+					IRC_Send($sock,"NOTICE $IRC_Msg_Nick :\001TIME $IRC_Time\001\n\n");				
+					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
+				
+				// Send a reply to the VERSION request
+				} else if ($IRC_CTCP[0] == "VERSION") {
+				
+					$IRC_LimiBot_Version = IRC_Setting("Version");
+					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :\001VERSION LimiBot - $IRC_LimiBot_Version - https://sourceforge.net/projects/limibot/\001\n\n");				
+					IRC_Console("Ctp","CTCP Request for $IRC_CTCP[0] from $IRC_Msg_Nick");
+					
+				}
+			
 			// If its a normal message...
 			} else {
 			
 				// Send it to the console command for printing
 				IRC_Console("Msg","[C:$IRC_Channel_ID|N:$IRC_Nick_ID] <$IRC_Msg_Nick> $IRC_Msg");
-				
-			}
 			
+			}
+						
 			// Add it to the log
 			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Msg","$IRC_Msg");
 			
@@ -93,7 +129,7 @@
 		if ($IRC_Command_Type == 'TOPIC') {
 		
 			// Take off the two new lines
-			$IRC_Topic = substr($IRC_Msg,0,-2);
+			$IRC_Topic = $IRC_Msg;
 			
 			// Get Current Time
 			$IRC_Topic_Set = time();
@@ -224,7 +260,6 @@
 	
 			// Extract data about the join
 			$IRC_Join_Channel = substr($command_[2],1,strlen($command_[2])-1);
-			$IRC_Join_Channel = substr($IRC_Join_Channel,0,-2);
 			
 			// Get the specific id for the channel from the stats database
 			$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Join_Channel");
@@ -254,7 +289,6 @@
 		
 			// Extract data about the part
 			$IRC_Part_Channel = $command_[2];
-			$IRC_Part_Channel = substr($IRC_Part_Channel,0,-2);
 			
 			// Get the specific id for the channel from the stats database
 			$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Part_Channel");
@@ -263,7 +297,7 @@
 			$IRC_Nick_ID = IRC_Nick_Lookup("$IRC_Msg_Nick","$IRC_Channel_ID");
 		
 			// Print to the console
-			IRC_Console("Svr","[N:$IRC_Nick_ID|C:$IRC_Channel_ID] $IRC_Msg_Nick Parted");
+			IRC_Console("Svr","[N:$IRC_Nick_ID|C:$IRC_Channel_ID] $IRC_Msg_Nick Parted $IRC_Part_Channel");
 			
 			// Write it to the log
 			IRC_Log("$IRC_Nick_ID","$IRC_Channel_ID","Part","");
@@ -297,12 +331,12 @@
 		// Because of a coding fuckup somewhere weve lost the # from the channel name :P so lets add it back
 		$IRC_Channel = "#$IRC_Topic[0]";
 		
+		// Now we have the channel name, move the topic back into the variable
+		$IRC_Topic = $IRC_Topic[1];
+		
 		// Because channel name is like.. useless, lets get the channel id specified in the database
 		$IRC_Channel_ID = IRC_Channel_Lookup("$IRC_Channel");
 	
-		// Take off the two new lines
-		$IRC_Topic = substr($IRC_Topic[1],0,-2);
-		
 		// Add some slashes so that there wont be problems with quote marks and evil shit like that
 		$IRC_Topic = addslashes($IRC_Topic);
 			
@@ -316,7 +350,7 @@
 		IRC_Log("","$IRC_Channel_ID","Topic","$IRC_Topic");
 		
 		// Show it in the console
-		IRC_Console("Tpc","[C:$IRC_Channel_ID] $IRC_Topic");
+		IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic: $IRC_Topic");
 	
 	}
 	
@@ -325,9 +359,6 @@
 	
 		// Splitting up the raw topic line so we can get the time it was put up, the user that did it, and what channel this is
 		$IRC_Topic = explode(" ",$IRC_Msg);
-		
-		// Removing the two new lines again
-		$IRC_Topic[2] = substr($IRC_Topic[2],0,-2);
 		
 		// Because of a coding fuckup somewhere weve lost the # from the channel name :P so lets add it back
 		$IRC_Channel = "#$IRC_Topic[0]";
@@ -355,6 +386,9 @@
 		// Show it in the console
 		IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Author: $IRC_Topic_Nickname");
 		
+		// Change the date to something we can all read
+		$IRC_Topic_Set = date("d/m/Y H:i",$IRC_Topic_Set);
+		
 		// And the date
 		IRC_Console("Tpc","[C:$IRC_Channel_ID] Topic Date: $IRC_Topic_Set");
 		
@@ -362,6 +396,10 @@
 	
 	// 376 is the end of the MOTD, hence we are now connected to the IRC network
 	if ($IRC_Command_Type == 376) {
+	
+		// Tell the console were now connected
+		$IRC_Server_Address = IRC_Setting("ServerIP");
+		IRC_Console("Svr","Connected to $IRC_Server_Address Successfully");
 	
 		// Set $nickcheck to 1 so that we bypass the quit on raw message 433 (nickname in use)
 		$nickcheck = 1;
@@ -373,7 +411,7 @@
 		// We do this here because then we know the bot has connected and the PID is valid
 		$IRC_PID_mySQL_Query = "UPDATE `settings` SET `value` = '$IRC_Bot_PID' WHERE `setting` = 'PID'";
 		$IRC_PID_mySQL_Result = mysql_query($IRC_PID_mySQL_Query);
-
+		
 		// Ask the database how many channels there are
 		$IRC_Join_mySQL_Query = "SELECT * FROM `channels` ORDER BY `channel` ASC";
 		$IRC_Join_mySQL_Result = mysql_query($IRC_Join_mySQL_Query);
@@ -388,9 +426,6 @@
 			
 			// Send join command to the server
 			IRC_Send($sock,"JOIN $IRC_Join_Channel");
-			
-			// Print to the console about it
-			IRC_Console("Svr","Joining $IRC_Join_Channel");
 			
 			// Usual bollocks, increase the loop start again.. yada yada yada
 			$IRC_Join_mySQL_Temp++;

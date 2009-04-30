@@ -1,13 +1,18 @@
 <?php
 
 	// Break apart the user host string to get ip/host out
-	$IRC_Admin_Command = substr($IRC_Msg,0,-2);
+	$IRC_Admin_Command = $IRC_Msg;
 	$IRC_Admin_Command = explode(" ",$IRC_Admin_Command);
 	
 	// Ask the database if the admin is already logged in..
 	$IRC_Admin_mySQL_Query = "SELECT * FROM `admins_temp` WHERE `admin` = '$IRC_Msg_Nick'";
 	$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 	$IRC_Admin_mySQL_Number = mysql_num_rows($IRC_Admin_mySQL_Result);
+	
+	// Set it to uppercase so commands are no longer case sensitive
+	$IRC_Admin_Command[0] = strtoupper($IRC_Admin_Command[0]);
+	$IRC_Admin_Command[1] = strtoupper($IRC_Admin_Command[1]);
+	$IRC_Admin_Command[2] = strtoupper($IRC_Admin_Command[2]);
 	
 	// If the admin is already logged in
 	if($IRC_Admin_mySQL_Number > 0) { 
@@ -61,10 +66,10 @@
 					$IRC_Help_Example = mysql_result($IRC_Help_mySQL_Result,0,"example");
 					
 					// Tell the admin the help information
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Command: $IRC_Help_Command");
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Description: $IRC_Help_Description");
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Usage: $IRC_Help_Usage");
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Example: $IRC_Help_Example");
+					IRC_Message($sock,"$IRC_Msg_Nick","Command: $IRC_Help_Command");
+					IRC_Message($sock,"$IRC_Msg_Nick","Description: $IRC_Help_Description");
+					IRC_Message($sock,"$IRC_Msg_Nick","Usage: $IRC_Help_Usage");
+					IRC_Message($sock,"$IRC_Msg_Nick","Example: $IRC_Help_Example");
 				
 				// This will be true if the command doesnt exist
 				} else if($IRC_Help_mySQL_Number == 0) {
@@ -95,14 +100,14 @@
 						$IRC_Help_Commands = trim($IRC_Help_Commands);
 						
 						// Tell the admin all the commands
-						IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Bot Commands:");
-						IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :$IRC_Help_Commands");
-						IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :For more help on a command: HELP [COMMAND NAME], Example: HELP ADMIN DEL");
+						IRC_Message($sock,"$IRC_Msg_Nick","Bot Commands:");
+						IRC_Message($sock,"$IRC_Msg_Nick","$IRC_Help_Commands");
+						IRC_Message($sock,"$IRC_Msg_Nick","For more help on a command: HELP [COMMAND NAME], Example: HELP ADMIN DEL");
 					
 					} else {
 					
 						// Tell the admin that it doesnt exist
-						IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Error, the command '$IRC_Help_Command' does not exist");
+						IRC_Message($sock,"$IRC_Msg_Nick","Error, the command '$IRC_Help_Command' does not exist");
 						
 					}
 					
@@ -123,7 +128,7 @@
 			$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 	
 			// Tell the admin that they are now logged out
-			IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Logged Out, Bye!");
+			IRC_Message($sock,"$IRC_Msg_Nick","Logged Out, Bye!");
 			
 			// Print to the console that they are logged out
 			IRC_Console("Admin","$IRC_Msg_Nick logged out");
@@ -143,7 +148,7 @@
 			if($IRC_Allowed == 1) {
 		
 				// Tell the admin that the bot will now restart
-				IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Restarting");
+				IRC_Message($sock,"$IRC_Msg_Nick","Restarting");
 			
 				// Empty the temporary admin table, just in case an admin quits while the bot is restarting
 				$IRC_Admin_mySQL_Query = "TRUNCATE TABLE `admins_temp`";
@@ -175,7 +180,7 @@
 				IRC_Send($sock,"$IRC_Admin_NickIdentify");
 				
 				// Tell the admin
-				IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+				IRC_Message($sock,"$IRC_Msg_Nick","Done");
 				
 				// Print to the console that the request was asked for
 				IRC_Console("Admin","Identify request by $IRC_Msg_Nick");
@@ -229,7 +234,7 @@
 							$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 					
 							// Tell the admin that the password has been changed
-							IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done.");
+							IRC_Message($sock,"$IRC_Msg_Nick","Done");
 					
 							// Print to the console that a password has changed
 							IRC_Console("Admin","Password Change - Account '$IRC_Admin_Account', New Password '$IRC_Admin_Pass_New'");
@@ -280,7 +285,7 @@
 							$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 					
 							// Tell the admin that the host has been changed
-							IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done. If you cannot login due to these changes, contact a Super Admin or Login to the Web-Administration.");
+							IRC_Message($sock,"$IRC_Msg_Nick","Done. If you cannot login due to these changes, contact a Super Admin or Login to the Web-Administration.");
 					
 							// Print to the console that a password has changed
 							IRC_Console("Admin","Host Change - Account '$IRC_Admin_Account', New Host '$IRC_Admin_Host_New'");
@@ -340,7 +345,7 @@
 									$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 					
 									// Tell the admin that the e-mail has been changed
-									IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done. E-Mail Address Changed for '$IRC_Admin_Account' to '$IRC_Admin_Mail'");
+									IRC_Message($sock,"$IRC_Msg_Nick","Done. E-Mail Address Changed for '$IRC_Admin_Account' to '$IRC_Admin_Mail'");
 							
 									// Print to the console that a password has changed
 									IRC_Console("Admin","E-Mail Change - Account '$IRC_Admin_Account', New Address '$IRC_Admin_Mail' - Changed by Super Admin");
@@ -357,7 +362,8 @@
 								$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 				
 								// Tell the admin that the e-mail has been changed
-								IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done. E-Mail Address Changed to '$IRC_Admin_Mail'");
+								IRC_Message($sock,"$IRC_Msg_Nick","Done. E-Mail Address Changed to '$IRC_Admin_Mail'");
+
 								
 								// Print to the console that a password has changed
 								IRC_Console("Admin","E-Mail Change - Account '$IRC_Admin_Account', New Address '$IRC_Admin_Mail'");
@@ -377,7 +383,7 @@
 							$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 				
 							// Tell the admin that the e-mail has been changed
-							IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done. E-Mail Address Changed to '$IRC_Admin_Mail'");
+							IRC_Message($sock,"$IRC_Msg_Nick","Done. E-Mail Address Changed to '$IRC_Admin_Mail'");
 							
 							// Print to the console that a password has changed
 							IRC_Console("Admin","E-Mail Change - Account '$IRC_Admin_Account', New Address '$IRC_Admin_Mail'");
@@ -414,7 +420,7 @@
 					$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 					
 					// Tell the admin that the admin has been added
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done. Use Web-Admin to Setup Permissions");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done. Use Web-Admin to Setup Permissions");
 			
 					// Print to the console that an admins been added
 					IRC_Console("Admin","New Admin - $IRC_Admin_New_Nick, $IRC_Admin_New_Pass, $IRC_Admin_New_Host");
@@ -446,7 +452,7 @@
 					$IRC_Admin_mySQL_Result = mysql_query($IRC_Admin_mySQL_Query);
 					
 					// Tell the admin that the admin has been removed
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 				
 					// Print to the console that an admins been removed
 					IRC_Console("Admin","Deleted Admin - $IRC_Admin_Del_Nick");
@@ -477,7 +483,7 @@
 					$IRC_Admin_mySQL_Temp = 0;
 					
 					// Describe the layout of the reply
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :SU - Login - IP Address - E-Mail Address");
+					IRC_Message($sock,"$IRC_Msg_Nick","SU - Login - IP Address - E-Mail Address");
 					
 					while ($IRC_Admin_mySQL_Number > $IRC_Admin_mySQL_Temp) {
 					
@@ -494,12 +500,12 @@
 						if($IRC_Admin_List_Supr == 1) {
 						
 							// Tell the admin
-							IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Y - $IRC_Admin_List_Nick - $IRC_Admin_List_Host - $IRC_Admin_List_Mail");
+							IRC_Message($sock,"$IRC_Msg_Nick","Y - $IRC_Admin_List_Nick - $IRC_Admin_List_Host - $IRC_Admin_List_Mail");
 							
 						} else {
 					
 							// Tell the admin
-							IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :N - $IRC_Admin_List_Nick - $IRC_Admin_List_Host - $IRC_Admin_List_Mail");
+							IRC_Message($sock,"$IRC_Msg_Nick","N - $IRC_Admin_List_Nick - $IRC_Admin_List_Host - $IRC_Admin_List_Mail");
 							
 						}
 					
@@ -509,7 +515,8 @@
 					}
 					
 					// Tell the admin were done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
+
 					
 					// Print to the console about whats happening
 					IRC_Console("Admin","Listing Admins to $IRC_Msg_Nick");
@@ -542,14 +549,15 @@
 					$IRC_Channel_Name = $IRC_Admin_Command[2];
 					
 					// mySQL Query to insert into the database
-					$IRC_Channel_mySQL_Query = "INSERT INTO `channels` (`id`,`channel`) VALUES ('', '$IRC_Channel_Name')";
+					$IRC_Channel_mySQL_Query = "INSERT INTO `channels` (`id`,`channel`,`topic_message`,`topic_set`,`topic_author`) VALUES ('', '$IRC_Channel_Name','','','')";
 					$IRC_Channel_mySQL_Result = mysql_query($IRC_Channel_mySQL_Query);
 					
 					// Join the new channel
 					IRC_Send($sock,"JOIN $IRC_Channel_Name");
 				
 					// Tell the admin that the channel has been added
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
+
 				
 					// Print to the console that a channel has been added
 					IRC_Console("Admin","New Channel - $IRC_Channel_Name");
@@ -585,8 +593,8 @@
 					IRC_Send($sock,"PART $IRC_Channel_Name");
 					
 					// Tell the admin that the channel has been removed
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
-				
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
+
 					// Print to the console that a channels been removed
 					IRC_Console("Admin","Deleted Channel - $IRC_Channel_Name");
 					IRC_Console("Svr","Parting $IRC_Channel_Name");
@@ -635,7 +643,7 @@
 						sleep(1);
 						
 						// Tell the admin
-						IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :$IRC_Channel_List");
+						IRC_Message($sock,"$IRC_Msg_Nick","$IRC_Channel_List");
 						
 						// Go back to the start of the while loop
 						$IRC_Channel_mySQL_Temp++;
@@ -643,7 +651,7 @@
 					}
 					
 					// Tell the admin were done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 					
 					// Print to the console about whats happening
 					IRC_Console("Admin","Listing Channels to $IRC_Msg_Nick");
@@ -680,7 +688,7 @@
 					IRC_Send($sock,"MODE $IRC_Mode_Channel +o $IRC_Mode_Nick");
 					
 					// Tell the admin its been done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 					
 					// Print to the console about whats happening
 					IRC_Console("Admin","Mode +o $IRC_Admin_Command[2] $IRC_Admin_Command[3] requested by $IRC_Msg_Nick");
@@ -712,7 +720,7 @@
 					IRC_Send($sock,"MODE $IRC_Mode_Channel -o $IRC_Mode_Nick");
 					
 					// Tell the admin its been done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 					
 					// Print to the console about whats happening
 					IRC_Console("Admin","Mode -o $IRC_Admin_Command[2] $IRC_Admin_Command[3] requested by $IRC_Msg_Nick");
@@ -744,7 +752,7 @@
 					IRC_Send($sock,"MODE $IRC_Mode_Channel +v $IRC_Mode_Nick");
 					
 					// Tell the admin its been done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 					
 					// Print to the console about whats happening
 					IRC_Console("Admin","Mode +v $IRC_Admin_Command[2] $IRC_Admin_Command[3] requested by $IRC_Msg_Nick");
@@ -776,7 +784,7 @@
 					IRC_Send($sock,"MODE $IRC_Mode_Channel -v $IRC_Mode_Nick");
 					
 					// Tell the admin its been done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 				
 						// Print to the console about whats happening
 					IRC_Console("Admin","Mode -v $IRC_Admin_Command[2] $IRC_Admin_Command[3] requested by $IRC_Msg_Nick");
@@ -810,7 +818,7 @@
 					IRC_Send($sock,"KICK $IRC_Kick_Channel $IRC_Kick_Nick :Kicked by $IRC_Msg_Nick");
 				
 					// Tell the admin its been done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 				
 					// Print to the console about whats happening
 					IRC_Console("Admin","Kick $IRC_Kick_Nick out of $IRC_Kick_Channel requested by $IRC_Msg_Nick");
@@ -869,7 +877,7 @@
 					IRC_Send($sock,"TOPIC $IRC_Topic_Channel :$IRC_Topic");
 				
 					// Tell the admin its been done
-					IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Done");
+					IRC_Message($sock,"$IRC_Msg_Nick","Done");
 				
 					// Print to the console about whats happening
 					IRC_Console("Admin","Topic Change - $IRC_Topic_Channel - $IRC_Topic_Topic");
@@ -905,7 +913,7 @@
 			if($IRC_Admin_mySQL_Number > 0) {
 				
 				// Tell the admin they are already logged in
-				IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Already Logged In on Account $IRC_Admin_Command[1], LOGOUT first.");
+				IRC_Message($sock,"$IRC_Msg_Nick","Already Logged In on Account $IRC_Admin_Command[1], LOGOUT first.");
 				
 				// Print to the console that an errors occured
 				IRC_Console("Admin","Error \t$IRC_Msg_Nick already logged in under account $IRC_Admin_Command[1]");
@@ -920,7 +928,7 @@
 				IRC_Console("Admin","$IRC_Msg_Nick Logged In on Account $IRC_Admin_Command[1]");
 				
 				// Tell the admin they are logged in
-				IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Access Granted");
+				IRC_Message($sock,"$IRC_Msg_Nick","Access Granted");
 				
 				// Write this to the admin log
 				IRC_Admin_Log("$IRC_Msg_Nick","$IRC_Msg");
@@ -933,7 +941,7 @@
 			IRC_Console("Admin","Access Denied to Account '$IRC_Admin_Command[1]' for nickname '$IRC_Msg_Nick - $IRC_Msg_Host'");
 				
 			// Tell the person that they dont have access
-			IRC_Send($sock,"PRIVMSG $IRC_Msg_Nick :Access Denied");
+			IRC_Message($sock,"$IRC_Msg_Nick","Access Denied");
 		
 		}
 		

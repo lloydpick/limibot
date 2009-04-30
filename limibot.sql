@@ -7,7 +7,7 @@ CREATE TABLE `admins` (
   `access` mediumtext NOT NULL,
   `super` tinyint(4) NOT NULL default '0',
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM PACK_KEYS=0 COMMENT='The Lists of Admin Nicknames, Passwords and thier Hosts' AUTO_INCREMENT=2 ;
+) TYPE=MyISAM PACK_KEYS=0 COMMENT='The Lists of Admin Nicknames, Passwords and thier Hosts' AUTO_INCREMENT=2;
 
 INSERT INTO `admins` VALUES (1, 'Example', 'password', 'some.host.co.uk', 'limibot@some.host.co.uk', ' 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 ', 1);
 
@@ -19,7 +19,7 @@ CREATE TABLE `admins_commands` (
   `usage` mediumtext NOT NULL,
   `example` mediumtext NOT NULL,
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM COMMENT='Admin Command Table, contains all Admin Commands' AUTO_INCREMENT=19 ;
+) TYPE=MyISAM COMMENT='Admin Command Table, contains all Admin Commands' AUTO_INCREMENT=19;
 
 INSERT INTO `admins_commands` VALUES (1, 'HELP', 'Lists all the Admin Commands Available to the specific administrator.', 'HELP [COMMAND]', 'HELP ADMIN');
 INSERT INTO `admins_commands` VALUES (2, 'ADMIN ADD', 'Add an admin to the bot', 'ADMIN ADD [NICKNAME] [PASSWORD] [IP/HOST]', 'ADMIN ADD Limited m00 adsl.multiplay.co.uk');
@@ -47,7 +47,7 @@ CREATE TABLE `admins_temp` (
   `account` tinytext NOT NULL,
   `time` timestamp(14) NOT NULL,
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM COMMENT='Admin Temporary Table for Storing Logged In Admins' AUTO_INCREMENT=1 ;
+) TYPE=MyISAM COMMENT='Admin Temporary Table for Storing Logged In Admins' AUTO_INCREMENT=1;
 
 
 CREATE TABLE `channels` (
@@ -58,7 +58,7 @@ CREATE TABLE `channels` (
   `topic_author` tinytext NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `channel` (`channel`)
-) TYPE=MyISAM PACK_KEYS=0 COMMENT='The List of Channels the Bot is currently In' AUTO_INCREMENT=2 ;
+) TYPE=MyISAM PACK_KEYS=0 COMMENT='The List of Channels the Bot is currently In' AUTO_INCREMENT=2;
 
 INSERT INTO `channels` VALUES (1, '#LimiNET', '', '', '');
 
@@ -71,7 +71,7 @@ CREATE TABLE `commands` (
   `usage` mediumtext NOT NULL,
   `filename` mediumtext NOT NULL,
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM AUTO_INCREMENT=5 ;
+) TYPE=MyISAM AUTO_INCREMENT=5;
 
 INSERT INTO `commands` VALUES (1, 1, '!stats', 'Retrieve individual stats for the nickname given and for the active channel', '!stats <nickname>', 'addon_userstats.php');
 INSERT INTO `commands` VALUES (2, 1, '!system', 'Grabs the output of the unix command \'uptime\' and sends it to the channel', '!system', 'addon_system.php');
@@ -99,7 +99,7 @@ CREATE TABLE `logs` (
   `type` tinytext NOT NULL,
   `log` mediumtext NOT NULL,
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM COMMENT='The Main IRC Chat Log for all Channels the Bot is in' AUTO_INCREMENT=1 ;
+) TYPE=MyISAM COMMENT='The Main IRC Chat Log for all Channels the Bot is in' AUTO_INCREMENT=1;
 
 
 CREATE TABLE `logs_admin` (
@@ -109,7 +109,7 @@ CREATE TABLE `logs_admin` (
   `nick` bigint(20) NOT NULL default '0',
   `log` mediumtext NOT NULL,
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM COMMENT='The Log of Admin Commands Used, By Who and When' AUTO_INCREMENT=1 ;
+) TYPE=MyISAM COMMENT='The Log of Admin Commands Used, By Who and When' AUTO_INCREMENT=1;
 
 
 CREATE TABLE `nicks` (
@@ -118,7 +118,7 @@ CREATE TABLE `nicks` (
   `first` timestamp(14) NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `nicks` (`nick`)
-) TYPE=MyISAM PACK_KEYS=0 COMMENT='The Lists of the NickNames the Bot has "Seen"' AUTO_INCREMENT=1 ;
+) TYPE=MyISAM PACK_KEYS=0 COMMENT='The Lists of the NickNames the Bot has "Seen"' AUTO_INCREMENT=1;
 
 
 CREATE TABLE `settings` (
@@ -135,7 +135,7 @@ INSERT INTO `settings` VALUES ('NickIdentify', '', 'NickServ Login Command');
 INSERT INTO `settings` VALUES ('BotStart', '', 'The time the bot connected to IRC (Automatically Entered)');
 INSERT INTO `settings` VALUES ('ShowRaw', '0', 'Show Raw IRC Commands in the Console');
 INSERT INTO `settings` VALUES ('PID', '', 'Process ID Number for the Bot');
-INSERT INTO `settings` VALUES ('Version', '0.6.3 Beta (Public Release)', 'LimiBot Version Number');
+INSERT INTO `settings` VALUES ('Version', '0.6.4 Beta (Public Release)', 'LimiBot Version Number');
 
 CREATE TABLE `statistics` (
   `id` bigint(20) NOT NULL auto_increment,
@@ -155,4 +155,4 @@ CREATE TABLE `statistics` (
   `kicks` bigint(20) NOT NULL default '0',
   `kicked` bigint(20) NOT NULL default '0',
   PRIMARY KEY  (`id`)
-) TYPE=MyISAM PACK_KEYS=0 COMMENT='Highly Detailed Information about Different Nicknames' AUTO_INCREMENT=1 ;
+) TYPE=MyISAM PACK_KEYS=0 COMMENT='Highly Detailed Information about Different Nicknames' AUTO_INCREMENT=1;
